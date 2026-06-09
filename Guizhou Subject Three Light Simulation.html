@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>灯光模拟</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@600&amp;family=Hanken+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#003f8f",
+                        "surface-dim": "#dadad7",
+                        "surface-tint": "#145ac0",
+                        "surface-bright": "#f9f9f6",
+                        "on-primary-container": "#bfd1ff",
+                        "surface-container-high": "#e8e8e5",
+                        "surface-container": "#eeeeeb",
+                        "frieze-gray": "#E8E8E8",
+                        "on-primary-fixed": "#001a43",
+                        "on-secondary-fixed-variant": "#464742",
+                        "secondary-container": "#e0e0d8",
+                        "secondary-fixed-dim": "#c7c7bf",
+                        "surface-container-low": "#f4f4f1",
+                        "on-primary-fixed-variant": "#004398",
+                        "hubris-red": "#e74c3c",
+                        "inverse-primary": "#afc6ff",
+                        "on-tertiary-fixed": "#001a43",
+                        "secondary-fixed": "#e3e3db",
+                        "tertiary-fixed-dim": "#aec6ff",
+                        "surface": "#f9f9f6",
+                        "tertiary-fixed": "#d8e2ff",
+                        "surface-variant": "#e2e3e0",
+                        "background": "#f9f9f6",
+                        "victory-green": "#27ae60",
+                        "on-secondary-container": "#62635d",
+                        "primary-fixed-dim": "#afc6ff",
+                        "marble-white": "#FFFFFF",
+                        "on-primary": "#ffffff",
+                        "secondary": "#5e5f59",
+                        "outline-variant": "#c2c6d5",
+                        "on-surface": "#1a1c1b",
+                        "on-error-container": "#93000a",
+                        "clay-black": "#111111",
+                        "on-tertiary-fixed-variant": "#004397",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-background": "#1a1c1b",
+                        "on-secondary-fixed": "#1a1c17",
+                        "on-surface-variant": "#424753",
+                        "primary-fixed": "#d9e2ff",
+                        "primary-container": "#0755bb",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#003f8e",
+                        "tertiary-container": "#1f56af",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e2e3e0",
+                        "on-tertiary-container": "#bed1ff",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#2f312f",
+                        "outline": "#737784",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#f1f1ee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "element-gap": "16px",
+                        "unit": "8px",
+                        "section-gap": "64px",
+                        "container-max": "1100px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Anybody"],
+                        "label-caps": ["Space Grotesk"],
+                        "headline-xl-mobile": ["Anybody"],
+                        "question-display": ["Hanken Grotesk"],
+                        "option-text": ["Hanken Grotesk"],
+                        "headline-xl": ["Anybody"],
+                        "body-md": ["Hanken Grotesk"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #f9f9f6;
+            font-family: 'Hanken Grotesk', system-ui, sans-serif;
+        }
+
+        .meander-border {
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='20' viewBox='0 0 40 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10h4v-6h12v12h-8v-4h4v2h2v-6H6v10H20V10h4v-6h12v12h-8v-4h4v2h2v-6H26v10H40' fill='none' stroke='%23003f8f' stroke-width='2'/%3E%3C/svg%3E");
+            background-repeat: repeat-x;
+            height: 20px;
+            width: 100%;
+        }
+
+        .main-card {
+            box-shadow: 0 4px 0 0 #003f8f, 0 12px 24px -10px rgba(0, 63, 143, 0.2);
+            border: 1px solid #003f8f;
+            border-radius: 0;
+        }
+
+        .option-button {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #003f8f;
+        }
+
+        .option-button:hover:not(:disabled) {
+            background-color: #003f8f;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 63, 143, 0.15);
+        }
+
+        .option-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .option-button.right {
+            background-color: #27ae60 !important;
+            border-color: #27ae60 !important;
+            color: white !important;
+        }
+
+        .option-button.wrong {
+            background-color: #e74c3c !important;
+            border-color: #e74c3c !important;
+            color: white !important;
+        }
+
+        .relief-text {
+            text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.8);
+        }
+
+        #tip {
+            min-height: 60px;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pt-20 pb-24">
+<!-- TopAppBar from COMPONENTS_4 -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-frieze-gray">
+<div class="max-w-container-max mx-auto px-gutter py-4 flex justify-between items-center">
+<div class="font-display-lg text-2xl md:text-headline-xl text-primary tracking-tighter uppercase font-bold">
+                Eremony
+            </div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 text-primary font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[20px]">timer</span>
+<span id="count">剩余：6s</span>
+</div>
+<div class="flex items-center gap-2 text-primary font-label-caps text-label-caps border-l border-frieze-gray pl-6">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span>进度 <span id="now">1</span>/10 | 得分 <span id="score">1000</span></span>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-grow flex items-center justify-center px-4 py-8">
+<div class="main-card w-full max-w-4xl bg-white rounded-none overflow-hidden flex flex-col">
+<!-- Decorative Frieze Header -->
+<div class="meander-border opacity-20"></div>
+<div class="p-8 md:p-12">
+<div class="text-center mb-10">
+<h1 class="font-display-lg text-primary text-3xl md:text-4xl lg:text-5xl mb-4 tracking-wider uppercase font-bold" style="font-weight: 800; letter-spacing: 0.2em;">灯光模拟</h1>
+<div class="h-2 w-32 bg-primary mx-auto"></div>
+</div>
+<div id="startScreen" class="text-center py-12">
+<div class="mb-8">
+<span class="material-symbols-outlined text-6xl text-primary">directions_car</span>
+</div>
+<button onclick="startExam()" class="inline-flex items-center gap-2 px-8 py-4 bg-primary text-white font-bold uppercase tracking-widest hover:bg-primary-container transition-all text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1" style="border-radius: 0;">
+<span class="material-symbols-outlined text-2xl">play_arrow</span>
+开始考试
+</button>
+</div>
+<div id="quizScreen" style="display: none;">
+<div class="text-center mb-4">
+<button id="toggleQBtn" class="inline-flex items-center gap-2 px-6 py-2 bg-secondary text-white font-bold uppercase tracking-widest hover:bg-secondary-container transition-colors" style="border-radius: 0;" onclick="toggleQuestion()">
+<span class="material-symbols-outlined" id="toggleIcon">visibility</span>
+<span id="toggleText">显示题目</span>
+</button>
+</div>
+<div class="font-display-lg text-clay-black text-center text-3xl md:text-4xl lg:text-5xl leading-tight min-h-[160px] flex items-center justify-center px-4 mb-12 italic border-y border-frieze-gray/50 py-8" id="q">
+<!-- Question text injected here -->
+</div>
+<div class="mb-8 p-4 text-center font-bold font-label-caps uppercase tracking-widest text-lg flex items-center justify-center gap-2" id="tip">
+<!-- Feedback text here -->
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+<button class="option-button h-20 px-4 font-bold uppercase text-primary bg-white text-sm" id="opt0">近光灯</button>
+<button class="option-button h-20 px-4 font-bold uppercase text-primary bg-white text-sm" id="opt1">远近光灯交替</button>
+<button class="option-button h-20 px-4 font-bold uppercase text-primary bg-white text-sm" id="opt2">远光灯</button>
+<button class="option-button h-20 px-4 font-bold uppercase text-primary bg-white text-sm" id="opt3">近光灯、雾灯、双闪</button>
+<button class="option-button h-20 px-4 font-bold uppercase text-primary bg-white text-sm" id="opt4">左转向灯、近光灯</button>
+<button class="option-button h-20 px-4 font-bold uppercase text-primary bg-white text-sm" id="opt5">示廓灯、双闪</button>
+<button class="option-button h-20 px-4 font-bold uppercase text-primary bg-white text-sm" id="opt6">左转向灯、远近交替</button>
+<button class="option-button h-20 px-4 font-bold uppercase text-primary bg-white text-sm" id="opt7">关闭所有灯光</button>
+</div>
+</div>
+</div>
+<!-- Decorative Frieze Footer -->
+<div class="meander-border opacity-20 mt-4"></div>
+</div>
+</main>
+<!-- Footer from COMPONENTS_4 -->
+<footer class="fixed bottom-0 left-0 w-full z-40 bg-marble-white flex flex-col items-center justify-center gap-4 px-gutter pb-6 border-t-[3px] border-double border-primary pt-6">
+<div class="flex gap-8 font-label-caps text-label-caps">
+<button class="text-primary underline decoration-victory-green hover:opacity-100 transition-opacity font-bold" onclick="reset()">重新开始测试</button>
+</div>
+</footer>
+<script>
+        const bank = [
+            { q: "请开启灯光", correctIdx: 0 },
+            { q: "通过拱桥", correctIdx: 1 },
+            { q: "通过急弯", correctIdx: 1 },
+            { q: "通过人行横道", correctIdx: 1 },
+            { q: "通过无信号灯路口", correctIdx: 1 },
+            { q: "超车", correctIdx: 6 },
+            { q: "雾天行驶", correctIdx: 3 },
+            { q: "大雨天行驶", correctIdx: 3 },
+            { q: "路口左转弯", correctIdx: 4 },
+            { q: "临时停车", correctIdx: 5 },
+            { q: "无路灯照明的道路行驶", correctIdx: 2 },
+            { q: "通过有信号灯路口", correctIdx: 0 },
+            { q: "近距离跟车", correctIdx: 0 },
+            { q: "有路灯照明的道路行驶", correctIdx: 0 },
+            { q: "无照明且对向车道150m内有车辆行驶", correctIdx: 0 },
+            { q: "模拟灯光结束", correctIdx: 7 }
+        ];
+
+        let currentList = [];
+        let index = 0;
+        let score = 1000; // 初始分数1000分
+        let lock = false;
+        let timer = null;
+        const remainTime = 5;
+        let synth = window.speechSynthesis;
+        let currentUtterance = null;
+
+        const countDom = document.getElementById("count");
+        const qDom = document.getElementById("q");
+        const nowDom = document.getElementById("now");
+        const scoreDom = document.getElementById("score");
+        const tipDom = document.getElementById("tip");
+        const toggleQBtn = document.getElementById("toggleQBtn");
+        const toggleIcon = document.getElementById("toggleIcon");
+        const toggleText = document.getElementById("toggleText");
+        const startScreen = document.getElementById("startScreen");
+        const quizScreen = document.getElementById("quizScreen");
+        let questionVisible = false;
+        let examStarted = false;
+        const optBtns = [
+            document.getElementById("opt0"),
+            document.getElementById("opt1"),
+            document.getElementById("opt2"),
+            document.getElementById("opt3"),
+            document.getElementById("opt4"),
+            document.getElementById("opt5"),
+            document.getElementById("opt6"),
+            document.getElementById("opt7")
+        ];
+
+        optBtns.forEach((btn, idx) => {
+            btn.onclick = () => check(idx, btn);
+        });
+
+        function startExam() {
+            examStarted = true;
+            startScreen.style.display = "none";
+            quizScreen.style.display = "block";
+            
+            // 初始化时隐藏题目
+            qDom.style.opacity = "0";
+            qDom.style.visibility = "hidden";
+            toggleIcon.innerText = "visibility";
+            toggleText.innerText = "显示题目";
+            
+            reset();
+        }
+
+        function toggleQuestion() {
+            questionVisible = !questionVisible;
+            if (questionVisible) {
+                qDom.style.opacity = "1";
+                qDom.style.visibility = "visible";
+                toggleIcon.innerText = "visibility_off";
+                toggleText.innerText = "隐藏题目";
+            } else {
+                qDom.style.opacity = "0";
+                qDom.style.visibility = "hidden";
+                toggleIcon.innerText = "visibility";
+                toggleText.innerText = "显示题目";
+            }
+        }
+
+        function speakQuestion() {
+            if (synth.speaking) {
+                synth.cancel();
+                return;
+            }
+            
+            const data = currentList[index];
+            if (!data) return;
+            
+            currentUtterance = new SpeechSynthesisUtterance(data.q);
+            currentUtterance.lang = 'zh-CN';
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1;
+            
+            currentUtterance.onend = () => {
+                currentUtterance = null;
+            };
+            
+            synth.speak(currentUtterance);
+        }
+
+        function random10() {
+            // 固定的第一题和最后一题
+            const firstQuestion = bank.find(q => q.q === "请开启灯光");
+            const lastQuestion = bank.find(q => q.q === "模拟灯光结束");
+            
+            // 从题库中排除第一题和最后一题
+            const middleBank = bank.filter(q => 
+                q.q !== "请开启灯光" && q.q !== "模拟灯光结束"
+            );
+            
+            // 随机抽取中间8题
+            const temp = [...middleBank];
+            const middleQuestions = [];
+            for (let i = 0; i < 8 && temp.length > 0; i++) {
+                const rnd = Math.floor(Math.random() * temp.length);
+                middleQuestions.push(temp.splice(rnd, 1)[0]);
+            }
+            
+            // 组合成完整的10题：第一题 + 中间8题 + 最后一题
+            return [firstQuestion, ...middleQuestions, lastQuestion];
+        }
+
+        function load() {
+            lock = true; // 锁定按钮，防止在朗读期间答题
+            optBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove("right", "wrong");
+            });
+            tipDom.style.visibility = "hidden";
+            tipDom.style.opacity = "0";
+
+            // Stop any ongoing speech when loading new question
+            if (synth.speaking) {
+                synth.cancel();
+            }
+
+            const data = currentList[index];
+            qDom.innerText = data.q;
+            nowDom.innerText = index + 1;
+            scoreDom.innerText = score;
+
+            // Auto speak the question and start timer after speaking ends
+            speakQuestionWithTimer();
+        }
+
+        function speakQuestionWithTimer() {
+            if (!synth) return;
+            
+            const data = currentList[index];
+            if (!data) {
+                startCountDown();
+                return;
+            }
+            
+            currentUtterance = new SpeechSynthesisUtterance(data.q);
+            currentUtterance.lang = 'zh-CN';
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1;
+            
+            currentUtterance.onend = () => {
+                currentUtterance = null;
+                unlockButtons(); // 朗读结束后解锁按钮
+                startCountDown(); // 开始计时
+            };
+            
+            currentUtterance.onerror = () => {
+                currentUtterance = null;
+                unlockButtons(); // 出错时也解锁按钮
+                startCountDown(); // 开始计时
+            };
+            
+            synth.speak(currentUtterance);
+        }
+
+        function unlockButtons() {
+            lock = false;
+            optBtns.forEach(btn => {
+                btn.disabled = false;
+            });
+        }
+
+        function startCountDown() {
+            let time = remainTime;
+            countDom.innerText = `剩余：${time}s`;
+            if (timer) clearInterval(timer);
+
+            timer = setInterval(() => {
+                time--;
+                countDom.innerText = `剩余：${time}s`;
+                if (time <= 0) {
+                    clearInterval(timer);
+                    if (!lock) {
+                        lock = true;
+                        timeOutAnswer();
+                    }
+                }
+            }, 1000);
+        }
+
+        function timeOutAnswer() {
+            const data = currentList[index];
+            const cIdx = data.correctIdx;
+            optBtns.forEach(b => b.disabled = true);
+            optBtns[cIdx].classList.add("right");
+
+            tipDom.className = "mb-8 p-4 text-center font-bold font-label-caps uppercase tracking-widest text-lg text-error flex items-center justify-center gap-2";
+            tipDom.innerHTML = `<span class="material-symbols-outlined">timer_off</span> TIMEOUT / 超时`;
+            tipDom.style.visibility = "visible";
+            tipDom.style.opacity = "1";
+            setTimeout(next, 1200);
+        }
+
+        function check(selectedIndex, btn) {
+            if (lock) return; // 如果处于锁定状态，直接返回
+            lock = true;
+            clearInterval(timer);
+
+            // Stop any ongoing speech when answering
+            if (synth.speaking) {
+                synth.cancel();
+            }
+
+            const data = currentList[index];
+            const cIdx = data.correctIdx;
+            optBtns.forEach(b => b.disabled = true);
+
+            tipDom.style.visibility = "visible";
+            tipDom.style.opacity = "1";
+            if (selectedIndex === cIdx) {
+                btn.classList.add("right");
+                tipDom.className = "mb-8 p-4 text-center font-bold font-label-caps uppercase tracking-widest text-lg text-victory-green flex items-center justify-center gap-2";
+                tipDom.innerHTML = `<span class="material-symbols-outlined">check_circle</span> CORRECT / 正确`;
+                
+                // 如果是中间8题（第2-9题），朗读正确答案
+                if (index >= 1 && index <= 8) {
+                    const correctAnswerText = getAnswerText(cIdx);
+                    speakCorrectAnswer(correctAnswerText, () => {
+                        setTimeout(next, 500);
+                    });
+                } else {
+                    setTimeout(next, 800);
+                }
+            } else {
+                btn.classList.add("wrong");
+                optBtns[cIdx].classList.add("right");
+                tipDom.className = "mb-8 p-4 text-center font-bold font-label-caps uppercase tracking-widest text-lg text-error flex items-center justify-center gap-2";
+                tipDom.innerHTML = `<span class="material-symbols-outlined">cancel</span> INCORRECT / 错误`;
+                
+                // 扣分：错一题扣100分
+                score -= 100;
+                if (score < 0) score = 0; // 确保分数不低于0
+                scoreDom.innerText = score;
+                
+                // 如果是中间8题（第2-9题），朗读正确答案
+                if (index >= 1 && index <= 8) {
+                    const correctAnswerText = getAnswerText(cIdx);
+                    speakCorrectAnswer(correctAnswerText, () => {
+                        setTimeout(next, 500);
+                    });
+                } else {
+                    setTimeout(next, 1500);
+                }
+            }
+        }
+
+        function getAnswerText(idx) {
+            const answers = [
+                "近光灯",
+                "远近光灯交替",
+                "远光灯",
+                "近光灯、雾灯、双闪",
+                "左转向灯、近光灯",
+                "示廓灯、双闪",
+                "左转向灯、远近交替",
+                "关闭所有灯光"
+            ];
+            return answers[idx];
+        }
+
+        function speakCorrectAnswer(text, callback) {
+            if (!synth) {
+                if (callback) callback();
+                return;
+            }
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            
+            utterance.onend = () => {
+                if (callback) callback();
+            };
+            
+            utterance.onerror = () => {
+                if (callback) callback();
+            };
+            
+            synth.speak(utterance);
+        }
+
+        function next() {
+            index++;
+            if (index >= 10) {
+                clearInterval(timer);
+                // 答完所有题后显示最终成绩
+                let resultMsg = `模拟结束\n\n最终得分：${score}分\n`;
+                if (score === 1000) {
+                    resultMsg += "\n完美！全部答对！";
+                } else if (score >= 800) {
+                    resultMsg += "\n优秀！继续保持！";
+                } else if (score >= 600) {
+                    resultMsg += "\n及格，还需努力！";
+                } else {
+                    resultMsg += "\n不及格，请加强练习！";
+                }
+                alert(resultMsg);
+                reset();
+                return;
+            }
+            load();
+        }
+
+        function reset() {
+            if (!examStarted) return;
+            
+            clearInterval(timer);
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            currentList = random10();
+            index = 0;
+            score = 1000; // 重置分数为1000
+            load();
+        }
+
+        // Initialize quiz - show start screen initially
+        examStarted = false;
+        startScreen.style.display = "block";
+        quizScreen.style.display = "none";
+    </script>
+</body></html>
